@@ -13,9 +13,9 @@
 ## their own work [4]. 
 ##
 ## The primary purpose of this fork is to convert the code from Python
-## to Perl. I am intentionally removing the Python file, the Lua Lua
-## file (and its related PNG file), and the tddp-client directory as I
-## will not be modifying or maintaining them at this time.
+## to Perl. I am intentionally removing the Python file, the Lua file
+## (and its related PNG file), and the tddp-client directory as I will
+## not be modifying or maintaining them at this time.
 ##
 ## This is an adaption rather than a literal translation from Python to
 ## Perl. I have also divided this into a module and a sample client.
@@ -52,7 +52,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper; $Data::Dumper::Terse = 1;
 
-use TplinkSmarthome;
+use TplinkSmarthome::Commands;
 
 ## Parse the CLI options
 GetOptions(
@@ -63,7 +63,7 @@ GetOptions(
 usage()
   if $help;
 
-my ( $host, $cmd ) = @ARGV;
+my ( $host, $cmd, @params ) = @ARGV;
 
 ## Sanity checks
 die 'A device (hostname or IP) must be specified'
@@ -72,7 +72,7 @@ die 'A device (hostname or IP) must be specified'
 die 'A command must be specified'
   if ! $cmd;
 
-my $result = TplinkSmarthome::send_command( $host, $cmd );
+my $result = TplinkSmarthome::Commands::send_command( $host, $cmd, @params );
 
 print "Command:  ", $cmd,                         "\n",
       "Message:  ", Dumper( $result->{message} ), "\n",
@@ -88,7 +88,7 @@ sub usage {
   ## Add a blank line for readability after an error message
   print "\n" if $status;
 
-  my $cmd_list = join ', ', sort ( TplinkSmarthome::get_commands() );
+  my $cmd_list = join ', ', sort ( TplinkSmarthome::list_commands() );
   print STDERR <<"EOF";
 USAGE: smartplug
 

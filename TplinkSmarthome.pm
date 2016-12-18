@@ -10,12 +10,12 @@ package TplinkSmarthome;
 ## work behind the original project [2]. To get the most from this or
 ## the original project, I strongly recommend reading that article.
 ## Others have also written code based on the original project [3] or on
-## their own work [4]. 
+## their own work [4].
 ##
 ## The primary purpose of this fork is to convert the code from Python
-## to Perl. I am intentionally removing the Python file, the Lua Lua
-## file (and its related PNG file), and the tddp-client directory as I
-## will not be modifying or maintaining them at this time.
+## to Perl. I am intentionally removing the Python file, the Lua file
+## (and its related PNG file), and the tddp-client directory as I will
+## not be modifying or maintaining them at this time.
 ##
 ## This is an adaption rather than a literal translation from Python to
 ## Perl. I have also divided this into a module and a sample client.
@@ -30,16 +30,16 @@ package TplinkSmarthome;
 ##
 ## TP-Link Wi-Fi Smart Plug Protocol Client
 ## For use with TP-Link HS-100 or HS-110
-##  
+##
 ## by Lubomir Stroetmann
-## Copyright 2016 softScheck GmbH 
-## 
+## Copyright 2016 softScheck GmbH
+##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ## you may not use this file except in compliance with the License.
 ## You may obtain a copy of the License at
-## 
+##
 ##      http://www.apache.org/licenses/LICENSE-2.0
-## 
+##
 ## Unless required by applicable law or agreed to in writing, software
 ## distributed under the License is distributed on an "AS IS" BASIS,
 ## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,39 +52,8 @@ use warnings;
 use Socket;
 use JSON::XS;
 
-## Predefined commands
-my %command = (
-	antitheft => { anti_theft => { get_rules       => {}               } },
-	cloudinfo => { cnCloud    => { get_info        => {}               } },
-	countdown => { count_down => { get_rules       => {}               } },
-	off       => { system     => { set_relay_state => { state   => 0 } } },
-	on        => { system     => { set_relay_state => { state   => 1 } } },
-	reboot    => { system     => { reboot          => { delay   => 1 } } },
-	reset     => { system     => { reset           => { delay   => 1 } } },
-	schedule  => { schedule   => { get_rules       => {}               } },
-	time      => { time       => { get_time        => {}               } },
-	wlanscan  => { netif      => { get_scaninfo    => { refresh => 0 } } },
-  info      => { system     => { get_sysinfo     => {}               } },
-  );
-
-sub get_commands {
-  return keys %command;
-}
-
-sub send_command {
-  my ( $host, $cmd ) = @_;
-  die qq{"$cmd" is not a pre-defined command}
-    if ! exists $command{$cmd};
-  return _communicate_with_device( $host, $command{$cmd} );
-}
-
 sub send_data {
   my ( $host, $data ) = @_;
-  return _communicate_with_device( $host, $data );
-}
-
-sub _communicate_with_device {
-  my ( $host, $message ) = @_;
 
   ## Static info
   my $port = 9999;
@@ -117,7 +86,7 @@ sub _communicate_with_device {
   binmode $connection;
 
   ## Send the obfuscated JSON message
-  print $connection _obfuscate( encode_json $message );
+  print $connection _obfuscate( encode_json $data );
 
   ## Get an obfuscated JSON reply
   # XXX In the python, I think this read exactly 2048 bytes
@@ -128,7 +97,7 @@ sub _communicate_with_device {
 
   ## Return reply as a data structure
   return {
-    message => $message,
+    message => $data,
     reply   => decode_json _clarify( $reply ),
     };
   }
