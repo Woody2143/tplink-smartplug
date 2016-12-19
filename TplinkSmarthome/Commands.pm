@@ -56,21 +56,22 @@ use TplinkSmarthome;
 
 ## Predefined commands
 my %command = (
-	antitheft     => { anti_theft => { get_rules       => {}               } },
-	cloudinfo     => { cnCloud    => { get_info        => {}               } },
-	countdown     => { count_down => { get_rules       => {}               } },
-  info          => { system     => { get_sysinfo     => {}               } },
-	off           => _set_relay_state( 0 ),
-	on            => _set_relay_state( 1 ),
-	relay         => \&_set_relay_state,
-	reboot        => { system     => { reboot          => { delay   => 1 } } },
-	reset         => { system     => { reset           => { delay   => 1 } } },
-	schedule      => { schedule   => { get_rules       => {}               } },
-	time          => { time       => { get_time        => {}               } },
-	wlanscan      => { netif      => { get_scaninfo    => { refresh => 1 } } },
-	meter_now     => { emeter     => { get_realtime    => {}               } },
-	meter_daily   => \&_get_daystat,
-	meter_monthly => \&_get_monthstat,
+  antitheft      => { anti_theft => { get_rules       => {}               } },
+  cloudinfo      => { cnCloud    => { get_info        => {}               } },
+  countdown      => { count_down => { get_rules       => {}               } },
+  info           => { system     => { get_sysinfo     => {}               } },
+  off            => _set_relay_state( 0 ),
+  on             => _set_relay_state( 1 ),
+  relay          => \&_set_relay_state,
+  reboot         => { system     => { reboot          => { delay   => 1 } } },
+  reset          => { system     => { reset           => { delay   => 1 } } },
+  schedule       => { schedule   => { get_rules       => {}               } },
+  time           => { time       => { get_time        => {}               } },
+  last_wlan_scan => _get_scaninfo( 0 ),
+  wlan_scan      => _get_scaninfo( 1 ),
+  meter_now      => { emeter     => { get_realtime    => {}               } },
+  meter_daily    => \&_get_daystat,
+  meter_monthly  => \&_get_monthstat,
   );
 
 sub list_commands {
@@ -81,7 +82,11 @@ sub send_command {
   my ( $host, $cmd, @params ) = @_;
   die qq{"$cmd" is not a pre-defined command}
     if ! exists $command{$cmd};
-  return TplinkSmarthome::send_data( $host, _get_command( $cmd, @params ) );
+  my $data = _get_command( $cmd, @params );
+  return {
+    message => $data,
+    reply   => TplinkSmarthome::send_data( $host, $data ),
+    };
 }
 
 sub _get_command {
@@ -94,7 +99,7 @@ sub _get_command {
 
 sub _set_relay_state {
   my ( $state ) = @_;
-  $state = _bin_state( 'Relay', $state );
+  $state = _bin_value( 'Relay', $state );
   return { system => { set_relay_state => { state => $state } } };
 }
 
@@ -112,18 +117,26 @@ sub _get_monthstat {
   return { emeter => { get_monthstat => { year => $year } } };
 }
 
+sub _get_scaninfo {
+  my ( $refresh ) = @_;
+  $refresh = _bin_value( 'Refresh', $refresh );
+  return { netif => { get_scaninfo => { refresh => $refresh } } };
+}
+
 ## This is used to determine whether to turn electricity on or off.
 ## Be persnickety. Default to off.
-sub _bin_state {
+sub _bin_value {
   my ( $descriptor, $state ) = @_;
   return 0
     if ! defined $state || $state eq '0';
   $state = lc $state;
   return 0
-    if $state eq 'off' || $state eq 'f' || $state eq 'false';
+    if $state eq 'off' || $state eq 'f' || $state eq 'false'
+    || $state eq 'n'   || $state eq 'no';
   return 1
-    if $state eq '1' || $state eq 'on' || $state eq 't' || $state eq 'true';
-  die "$descriptor state must be 0/off/f/false or 1/on/t/true (case insensitive)"
+    if $state eq '1'    || $state eq 'on' || $state eq 't'
+    || $state eq 'true' || $state eq 'y'  || $state eq 'yes';
+  die "$descriptor state must be 0/off/f/false/n/no or 1/on/t/true/y/yes (case insensitive)"
 }
 
 ## Provide all the elements from localtime

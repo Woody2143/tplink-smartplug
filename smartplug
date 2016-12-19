@@ -88,12 +88,12 @@ sub usage {
   ## Add a blank line for readability after an error message
   print "\n" if $status;
 
-  my $cmd_list = join ', ', sort ( TplinkSmarthome::list_commands() );
+  my $cmd_list = join ', ', sort ( TplinkSmarthome::Commands::list_commands() );
   print STDERR <<"EOF";
 USAGE: smartplug
 
 Send pre-defined command to device
-  smartplug [ -v | --verbose ] <host> <command>
+  smartplug [ -v | --verbose ] <host> <command> [ <optional params> ]
 
 Help (this message)
   smartplug [ -h | --help ]

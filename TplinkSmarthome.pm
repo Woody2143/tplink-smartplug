@@ -96,10 +96,7 @@ sub send_data {
   close $connection;
 
   ## Return reply as a data structure
-  return {
-    message => $data,
-    reply   => decode_json _clarify( $reply ),
-    };
+  return decode_json _clarify( $reply );
   }
 
 sub _obfuscate {
